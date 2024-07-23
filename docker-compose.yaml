@@ -14,3 +14,11 @@ services:
     command:
       - -js # enable JetStream functionality
       - -D # enable debugging output
+  
+  pub:
+    build: .
+    command: [ "./pubsub", "publish" ]
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - nats

@@ -3,12 +3,15 @@ package publisher
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"nats-js-poc/pkg/common"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/nats-io/nats.go/jetstream"
 )
 
 type Publisher struct {
@@ -16,8 +19,17 @@ type Publisher struct {
 }
 
 func (p Publisher) Start() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
+
+	stream, err := p.JetStreamClient.JetStream.Stream(ctx, common.StreamName)
+	if errors.Is(err, jetstream.ErrStreamNotFound) {
+		fmt.Printf("stream %s not found, creating new\n", common.StreamName)
+		stream, err = p.JetStreamClient.JetStream.CreateStream(ctx, p.JetStreamClient.JetStreamCfg)
+		if err != nil {
+			return fmt.Errorf("failed to create stream: %v", err)
+		}
+		fmt.Printf("stream %s created\n", common.StreamName)
+	}
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
@@ -33,11 +45,13 @@ outerLoop:
 				return err
 			}
 
-			_, err = p.JetStreamClient.Js.Publish(ctx, common.Subject, msgBytes)
+			_, err = p.JetStreamClient.JetStream.Publish(ctx, common.Subject, msgBytes)
 			if err != nil {
 				return err
 			}
 			counter++
+
+			common.PrintStreamState(ctx, stream)
 		case <-signalChan:
 			break outerLoop
 		}

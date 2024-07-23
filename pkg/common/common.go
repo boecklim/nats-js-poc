@@ -1,6 +1,10 @@
 package common
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -14,8 +18,9 @@ type Msg struct {
 }
 
 type JetStreamClient struct {
-	Js  jetstream.JetStream
-	Cfg jetstream.StreamConfig
+	JetStream    jetstream.JetStream
+	JetStreamCfg jetstream.StreamConfig
+	nc           *nats.Conn
 }
 
 func NewJetStreamClient(url string) (*JetStreamClient, error) {
@@ -23,8 +28,6 @@ func NewJetStreamClient(url string) (*JetStreamClient, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	defer nc.Drain()
 
 	js, err := jetstream.New(nc)
 	if err != nil {
@@ -34,14 +37,33 @@ func NewJetStreamClient(url string) (*JetStreamClient, error) {
 	cfg := jetstream.StreamConfig{
 		Name:      StreamName,
 		Retention: jetstream.WorkQueuePolicy,
-		Subjects:  []string{},
+		Subjects:  []string{Subject},
 		Storage:   jetstream.MemoryStorage,
 	}
 
 	p := &JetStreamClient{
-		Js:  js,
-		Cfg: cfg,
+		JetStream:    js,
+		JetStreamCfg: cfg,
+		nc:           nc,
 	}
 
 	return p, nil
+}
+
+func (js *JetStreamClient) Close() error {
+	return js.nc.Drain()
+}
+
+func PrintStreamState(ctx context.Context, stream jetstream.Stream) error {
+	info, err := stream.Info(ctx)
+	if err != nil {
+		return err
+	}
+	b, err := json.MarshalIndent(info.State, "", " ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(b))
+
+	return nil
 }

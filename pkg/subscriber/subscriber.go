@@ -22,10 +22,10 @@ func (s Subscriber) Start() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	stream, err := s.JetStreamClient.Js.Stream(ctx, common.StreamName)
+	stream, err := s.JetStreamClient.JetStream.Stream(ctx, common.StreamName)
 	if errors.Is(err, jetstream.ErrStreamNotFound) {
 		fmt.Printf("stream %s not found, creating new\n", common.StreamName)
-		stream, err = s.JetStreamClient.Js.CreateStream(ctx, s.JetStreamClient.Cfg)
+		stream, err = s.JetStreamClient.JetStream.CreateStream(ctx, s.JetStreamClient.JetStreamCfg)
 		if err != nil {
 			return fmt.Errorf("failed to create stream: %v", err)
 		}
@@ -69,27 +69,13 @@ outerLoop:
 				msg.Ack()
 			}
 
-			printStreamState(ctx, stream)
+			common.PrintStreamState(ctx, stream)
 		case <-signalChan:
 			break outerLoop
 		}
 	}
 
 	fmt.Println("Finished")
-
-	return nil
-}
-
-func printStreamState(ctx context.Context, stream jetstream.Stream) error {
-	info, err := stream.Info(ctx)
-	if err != nil {
-		return err
-	}
-	b, err := json.MarshalIndent(info.State, "", " ")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(b))
 
 	return nil
 }
