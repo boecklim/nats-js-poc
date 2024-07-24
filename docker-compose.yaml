@@ -28,6 +28,7 @@ services:
       - nats
     ports:
       - 4223:4222
+      - 8223:8222
     volumes:
       - ./jetstream-cluster/n2:/data
       - ./nats-server-host-b.conf:/nats-server.conf
@@ -43,6 +44,7 @@ services:
       - nats
     ports:
       - 4224:4222
+      - 8224:8222
     volumes:
       - ./jetstream-cluster/n3:/data
       - ./nats-server-host-c.conf:/nats-server.conf
