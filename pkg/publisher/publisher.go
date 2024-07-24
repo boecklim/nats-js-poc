@@ -3,38 +3,33 @@ package publisher
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"log/slog"
 	"nats-js-poc/pkg/common"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/nats-io/nats.go/jetstream"
+	"github.com/mroth/jitter"
 )
 
 type Publisher struct {
-	common.JetStreamClient
+	common.Client
 }
 
 func (p Publisher) Start() error {
 	ctx := context.Background()
 
-	stream, err := p.JetStreamClient.JetStream.Stream(ctx, common.StreamName)
-	if errors.Is(err, jetstream.ErrStreamNotFound) {
-		fmt.Printf("stream %s not found, creating new\n", common.StreamName)
-		stream, err = p.JetStreamClient.JetStream.CreateStream(ctx, p.JetStreamClient.JetStreamCfg)
-		if err != nil {
-			return fmt.Errorf("failed to create stream: %v", err)
-		}
-		fmt.Printf("stream %s created\n", common.StreamName)
+	stream, err := p.Client.GetStream(ctx)
+	if err != nil {
+		return err
 	}
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
 
-	msgTicker := time.NewTicker(1 * time.Second)
+	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
 	counter := 0
 outerLoop:
 	for {
@@ -45,13 +40,25 @@ outerLoop:
 				return err
 			}
 
-			_, err = p.JetStreamClient.JetStream.Publish(ctx, common.Subject, msgBytes)
+			_, err = p.Client.JetStream.Publish(ctx, common.Subject, msgBytes)
 			if err != nil {
 				return err
 			}
+			p.Client.Logger.Info("published message")
 			counter++
 
-			common.PrintStreamState(ctx, stream)
+			info, err := stream.Info(ctx)
+			if err != nil {
+				p.Client.Logger.Error("failed to get info", slog.String("err", err.Error()))
+				continue
+			}
+
+			p.Client.Logger.Info("info",
+				slog.Int("cons", info.State.Consumers),
+				slog.Int("subjects", int(info.State.NumSubjects)),
+				slog.Int("msgs", int(info.State.Msgs)),
+			)
+
 		case <-signalChan:
 			break outerLoop
 		}

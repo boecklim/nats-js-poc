@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
+	"log/slog"
 	"nats-js-poc/pkg/common"
 	"nats-js-poc/pkg/publisher"
 	"nats-js-poc/pkg/subscriber"
@@ -33,8 +33,8 @@ func run() error {
 	if url == "" {
 		url = nats.DefaultURL
 	}
-
-	client, err := common.NewJetStreamClient(url)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	client, err := common.NewJetStreamClient(url, logger)
 	if err != nil {
 		return err
 	}
@@ -43,22 +43,22 @@ func run() error {
 	switch arg {
 	case "subscribe":
 
-		p := subscriber.Subscriber{JetStreamClient: *client}
+		p := subscriber.Subscriber{Client: *client}
 
 		err = p.Start()
 		if err != nil {
 			return err
 		}
-		fmt.Println("Finished subscribing")
+		logger.Info("Finished subscribing")
 	case "publish":
 
-		s := publisher.Publisher{JetStreamClient: *client}
+		s := publisher.Publisher{Client: *client}
 
 		err = s.Start()
 		if err != nil {
 			return err
 		}
-		fmt.Println("Finished publishing")
+		logger.Info("Finished publishing")
 	default:
 		return errors.New("either publish or subscribe")
 	}

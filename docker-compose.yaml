@@ -22,3 +22,11 @@ services:
       - NATS_URL=nats://nats:4222
     depends_on:
       - nats
+
+  sub:
+    build: .
+    command: [ "./pubsub", "subscribe" ]
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - nats

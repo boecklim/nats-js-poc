@@ -3,36 +3,31 @@ package subscriber
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"log/slog"
 	"nats-js-poc/pkg/common"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/mroth/jitter"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
 type Subscriber struct {
-	common.JetStreamClient
+	common.Client
 }
 
 func (s Subscriber) Start() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	stream, err := s.JetStreamClient.JetStream.Stream(ctx, common.StreamName)
-	if errors.Is(err, jetstream.ErrStreamNotFound) {
-		fmt.Printf("stream %s not found, creating new\n", common.StreamName)
-		stream, err = s.JetStreamClient.JetStream.CreateStream(ctx, s.JetStreamClient.JetStreamCfg)
-		if err != nil {
-			return fmt.Errorf("failed to create stream: %v", err)
-		}
-		fmt.Printf("stream %s created\n", common.StreamName)
+	stream, err := s.Client.GetStream(ctx)
+	if err != nil {
+		return err
 	}
-
-	fmt.Printf("stream %s found\n", common.StreamName)
+	s.Client.Logger.Info("got stream")
 
 	cons, err := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
 		Name:      "consumer-1",
@@ -42,17 +37,21 @@ func (s Subscriber) Start() error {
 		return err
 	}
 
+	s.Client.Logger.Info("got consumer")
+
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
 
-	msgTicker := time.NewTicker(5 * time.Second)
+	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
+
+	s.Client.Logger.Info("starting consuming")
 
 outerLoop:
 	for {
 		select {
 		case <-msgTicker.C:
 
-			batch, err := cons.FetchNoWait(10)
+			batch, err := cons.Fetch(1)
 			if err != nil {
 				return err
 			}
@@ -62,20 +61,20 @@ outerLoop:
 				err = json.Unmarshal(msg.Data(), &newMsg)
 				if err != nil {
 					fmt.Printf("failed to unmarshal message: %v", err)
+					s.Client.Logger.Error("failed to unmarshal message", slog.String("err", err.Error()))
 				} else {
-					fmt.Printf("new message: %s\n", string(msg.Data()))
+					s.Client.Logger.Info("new msg", slog.String("msg", string(msg.Data())))
 				}
 
 				msg.Ack()
 			}
 
-			common.PrintStreamState(ctx, stream)
 		case <-signalChan:
 			break outerLoop
 		}
 	}
 
-	fmt.Println("Finished")
+	s.Client.Logger.Info("Finished")
 
 	return nil
 }

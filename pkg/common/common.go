@@ -2,8 +2,9 @@ package common
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
@@ -17,13 +18,14 @@ type Msg struct {
 	ID  int    `json:"id"`
 }
 
-type JetStreamClient struct {
+type Client struct {
 	JetStream    jetstream.JetStream
 	JetStreamCfg jetstream.StreamConfig
 	nc           *nats.Conn
+	Logger       *slog.Logger
 }
 
-func NewJetStreamClient(url string) (*JetStreamClient, error) {
+func NewJetStreamClient(url string, logger *slog.Logger) (*Client, error) {
 	nc, err := nats.Connect(url)
 	if err != nil {
 		return nil, err
@@ -41,29 +43,34 @@ func NewJetStreamClient(url string) (*JetStreamClient, error) {
 		Storage:   jetstream.MemoryStorage,
 	}
 
-	p := &JetStreamClient{
+	p := &Client{
 		JetStream:    js,
 		JetStreamCfg: cfg,
 		nc:           nc,
+		Logger:       logger,
 	}
 
 	return p, nil
 }
 
-func (js *JetStreamClient) Close() error {
+func (js *Client) Close() error {
 	return js.nc.Drain()
 }
 
-func PrintStreamState(ctx context.Context, stream jetstream.Stream) error {
-	info, err := stream.Info(ctx)
-	if err != nil {
-		return err
-	}
-	b, err := json.MarshalIndent(info.State, "", " ")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(b))
+func (js *Client) GetStream(ctx context.Context) (jetstream.Stream, error) {
+	stream, err := js.JetStream.Stream(ctx, StreamName)
+	if errors.Is(err, jetstream.ErrStreamNotFound) {
+		js.Logger.Error(fmt.Sprintf("stream %s not found, creating new", StreamName))
 
-	return nil
+		stream, err = js.JetStream.CreateStream(ctx, js.JetStreamCfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create stream: %v", err)
+		}
+
+		js.Logger.Info(fmt.Sprintf("stream %s created", StreamName))
+		return stream, nil
+	}
+
+	js.Logger.Info(fmt.Sprintf("stream %s found", StreamName))
+	return stream, nil
 }

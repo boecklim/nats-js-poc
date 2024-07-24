@@ -1,5 +1,7 @@
 github.com/klauspost/compress v1.17.2 h1:RlWWUY/Dr4fL8qk9YG7DTZ7PDgME2V4csBXA8L/ixi4=
 github.com/klauspost/compress v1.17.2/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
+github.com/mroth/jitter v0.1.1 h1:iKsdYKGueIT+Ml2fl79XmBALzXKfMQ6lsVomuFgK3sA=
+github.com/mroth/jitter v0.1.1/go.mod h1:Lkb7oqhs8Jdq/G4EhZXAfWyDCO3Y/b+yw+FV4nsx6x4=
 github.com/nats-io/nats.go v1.36.0 h1:suEUPuWzTSse/XhESwqLxXGuj8vGRuPRoG7MoRN/qyU=
 github.com/nats-io/nats.go v1.36.0/go.mod h1:Ubdu4Nh9exXdSz0RVWRFBbRfrbSxOYd26oF0wkWclB8=
 github.com/nats-io/nkeys v0.4.7 h1:RwNJbbIdYCoClSDNY7QVKZlyb/wfT6ugvFCiKy6vDvI=
