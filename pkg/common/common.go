@@ -83,9 +83,25 @@ func (cl *Client) Connect() error {
 		nats.ErrorHandler(func(c *nats.Conn, s *nats.Subscription, err error) {
 			cl.Logger.Error("connection error", slog.String("err", err.Error()))
 		}),
+		nats.DiscoveredServersHandler(func(nc *nats.Conn) {
+			cl.Logger.Info(fmt.Sprintf("Known servers: %v\n", nc.Servers()))
+			cl.Logger.Info(fmt.Sprintf("Discovered servers: %v\n", nc.DiscoveredServers()))
+		}),
+		nats.DisconnectErrHandler(func(_ *nats.Conn, err error) {
+			cl.Logger.Error("client disconnected", slog.String("err", err.Error()))
+		}),
+		nats.ReconnectHandler(func(_ *nats.Conn) {
+			cl.Logger.Info("client reconnected")
+		}),
+		nats.ClosedHandler(func(_ *nats.Conn) {
+			cl.Logger.Info("client closed")
+		}),
 		nats.RetryOnFailedConnect(true),
-		nats.PingInterval(5*time.Second),
-		nats.MaxPingsOutstanding(5),
+		nats.PingInterval(2*time.Minute),
+		nats.MaxPingsOutstanding(2),
+		nats.ReconnectBufSize(8*1024*1024),
+		nats.MaxReconnects(60),
+		nats.ReconnectWait(2*time.Second),
 	)
 	if err != nil {
 		return err

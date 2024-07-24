@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"nats-js-poc/pkg/common"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,8 +16,7 @@ type Publisher struct {
 	common.Client
 }
 
-func (p Publisher) Start() error {
-	ctx := context.Background()
+func (p Publisher) Start(ctx context.Context) error {
 
 	err := p.Connect()
 	if err != nil {
@@ -31,9 +27,6 @@ func (p Publisher) Start() error {
 	if err != nil {
 		return err
 	}
-
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
 
 	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
 outerLoop:
@@ -62,7 +55,7 @@ outerLoop:
 				slog.Int("msgs", int(info.State.Msgs)),
 			)
 
-		case <-signalChan:
+		case <-ctx.Done():
 			break outerLoop
 		}
 	}

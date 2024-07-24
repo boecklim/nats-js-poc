@@ -1,15 +1,17 @@
 package main
 
 import (
+	"context"
 	"errors"
+	"github.com/nats-io/nats.go"
 	"log"
 	"log/slog"
 	"nats-js-poc/pkg/common"
 	"nats-js-poc/pkg/publisher"
 	"nats-js-poc/pkg/subscriber"
 	"os"
-
-	"github.com/nats-io/nats.go"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -38,6 +40,19 @@ func run() error {
 	var client *common.Client
 	var err error
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		signalChan := make(chan os.Signal, 1)
+		//signal.Notify(signalChan, os.Interrupt) // Signal from Ctrl+C
+		signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
+		<-signalChan
+
+		logger.Info("Shutting down")
+		cancel()
+	}()
+
 	arg := os.Args[1]
 	switch arg {
 	case "subscribe":
@@ -48,7 +63,7 @@ func run() error {
 		}
 		p := subscriber.Subscriber{Client: *client}
 
-		err = p.Start()
+		err = p.Start(ctx)
 		if err != nil {
 			return err
 		}
@@ -61,7 +76,7 @@ func run() error {
 		}
 		s := publisher.Publisher{Client: *client}
 
-		err = s.Start()
+		err = s.Start(ctx)
 		if err != nil {
 			return err
 		}

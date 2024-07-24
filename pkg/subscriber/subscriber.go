@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"nats-js-poc/pkg/common"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/mroth/jitter"
@@ -21,13 +18,11 @@ type Subscriber struct {
 
 const consumerName = "consumer-1"
 
-func (s Subscriber) Start() error {
+func (s Subscriber) Start(ctx context.Context) error {
 
 	waitForSeconds := 10
-	s.Client.Logger.Info(fmt.Sprintf("wating for %d seconds so a number of messages are already published on stream", waitForSeconds))
+	s.Client.Logger.Info(fmt.Sprintf("wating for %d seconds", waitForSeconds))
 	time.Sleep(time.Duration(waitForSeconds) * time.Second)
-
-	ctx := context.Background()
 
 	err := s.Connect()
 	if err != nil {
@@ -49,9 +44,6 @@ func (s Subscriber) Start() error {
 	}
 
 	s.Client.Logger.Info("got consumer")
-
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
 
 	s.Client.Logger.Info("starting consuming")
 
@@ -83,7 +75,7 @@ outerLoop:
 				}
 			}
 
-		case <-signalChan:
+		case <-ctx.Done():
 			break outerLoop
 		}
 	}
