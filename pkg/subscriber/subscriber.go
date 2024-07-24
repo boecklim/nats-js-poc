@@ -19,9 +19,20 @@ type Subscriber struct {
 	common.Client
 }
 
+const consumerName = "consumer-1"
+
 func (s Subscriber) Start() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+
+	waitForSeconds := 10
+	s.Client.Logger.Info(fmt.Sprintf("wating for %d seconds so a number of messages are already published on stream", waitForSeconds))
+	time.Sleep(time.Duration(waitForSeconds) * time.Second)
+
+	ctx := context.Background()
+
+	err := s.Connect()
+	if err != nil {
+		return err
+	}
 
 	stream, err := s.Client.GetStream(ctx)
 	if err != nil {
@@ -30,7 +41,7 @@ func (s Subscriber) Start() error {
 	s.Client.Logger.Info("got stream")
 
 	cons, err := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
-		Name:      "consumer-1",
+		Name:      consumerName,
 		AckPolicy: jetstream.AckExplicitPolicy,
 	})
 	if err != nil {
@@ -42,10 +53,9 @@ func (s Subscriber) Start() error {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
 
-	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
-
 	s.Client.Logger.Info("starting consuming")
 
+	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
 outerLoop:
 	for {
 		select {
@@ -55,6 +65,7 @@ outerLoop:
 			if err != nil {
 				return err
 			}
+
 			for msg := range batch.Messages() {
 				newMsg := common.Msg{}
 
@@ -66,7 +77,10 @@ outerLoop:
 					s.Client.Logger.Info("message received", slog.String("msg", newMsg.Msg), slog.String("uuid", newMsg.UUID))
 				}
 
-				msg.Ack()
+				err = msg.Ack()
+				if err != nil {
+					s.Client.Logger.Error("failed to ack message", slog.String("err", err.Error()))
+				}
 			}
 
 		case <-signalChan:

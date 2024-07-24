@@ -22,6 +22,11 @@ type Publisher struct {
 func (p Publisher) Start() error {
 	ctx := context.Background()
 
+	err := p.Connect()
+	if err != nil {
+		return err
+	}
+
 	stream, err := p.Client.GetStream(ctx)
 	if err != nil {
 		return err

@@ -35,13 +35,14 @@ func run() error {
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-	var client common.Client
+	var client *common.Client
+	var err error
 
 	arg := os.Args[1]
 	switch arg {
 	case "subscribe":
 
-		client, err := common.NewJetStreamClient(url, logger, "subscriber connection")
+		client, err = common.NewJetStreamClient(url, logger, "subscriber connection")
 		if err != nil {
 			return err
 		}
@@ -54,7 +55,7 @@ func run() error {
 		logger.Info("Finished subscribing")
 	case "publish":
 
-		client, err := common.NewJetStreamClient(url, logger, "publisher connection")
+		client, err = common.NewJetStreamClient(url, logger, "publisher connection")
 		if err != nil {
 			return err
 		}
