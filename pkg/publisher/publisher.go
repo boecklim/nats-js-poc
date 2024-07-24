@@ -29,7 +29,7 @@ func (p Publisher) Start(ctx context.Context) error {
 
 	p.Client.Logger.Info("starting publishing")
 
-	msgTicker := jitter.NewTicker(500*time.Millisecond, 0.5)
+	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
 outerLoop:
 	for {
 		select {

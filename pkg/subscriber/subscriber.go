@@ -48,7 +48,7 @@ outerLoop:
 		select {
 		case <-msgTicker.C:
 
-			batch, err := cons.Fetch(5)
+			batch, err := cons.Fetch(1)
 			if err != nil {
 				return err
 			}
