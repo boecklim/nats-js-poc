@@ -4,7 +4,6 @@ services:
   nats-a:
     container_name: n1
     image: nats:2.10.10
-    dns_search: example.net
     entrypoint: /nats-server
     command:
       - -c=./nats-server.conf
@@ -20,7 +19,6 @@ services:
   nats-b:
     container_name: n2
     image: nats:2.10.10
-    dns_search: example.net
     entrypoint: /nats-server
     command:
       - -c=./nats-server.conf
@@ -36,7 +34,6 @@ services:
   nats-c:
     container_name: n3
     image: nats:2.10.10
-    dns_search: example.net
     entrypoint: /nats-server
     command:
       - -c=./nats-server.conf
