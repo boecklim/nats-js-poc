@@ -68,8 +68,8 @@ func (cl *Client) Connect() error {
 			cl.Logger.Error("connection error", slog.String("err", err.Error()))
 		}),
 		nats.DiscoveredServersHandler(func(nc *nats.Conn) {
-			cl.Logger.Info(fmt.Sprintf("Known servers: %v\n", nc.Servers()))
-			cl.Logger.Info(fmt.Sprintf("Discovered servers: %v\n", nc.DiscoveredServers()))
+			cl.Logger.Info(fmt.Sprintf("======= Known servers: %v\n", nc.Servers()))
+			cl.Logger.Info(fmt.Sprintf("======= Discovered servers: %v\n", nc.DiscoveredServers()))
 		}),
 		nats.DisconnectErrHandler(func(_ *nats.Conn, err error) {
 			cl.Logger.Error("client disconnected", slog.String("err", err.Error()))

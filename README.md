@@ -6,15 +6,20 @@
 make run
 ```
 
-in order to build the app before running 
+In order to build the app before running 
 ```
 make run-rmi
 ```
 
+Add a 4th nats server
+
+```
+docker-compose up --remove-orphans nats-d
+```
+
 ## Todos
-- [X] server configuration
-    - [X] clustering
-- [X] connection configuration
+- [X] Server configuration
+    - [X] Clustering
+- [X] Connection configuration
     - [X] Reconnection
     - [X] Ping
-

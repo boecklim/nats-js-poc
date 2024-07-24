@@ -12,6 +12,7 @@ services:
       - nats
     ports:
       - 4222:4222
+      - 8222:8222
     volumes:
       - ./jetstream-cluster/n1:/data
       - ./nats-server-host-a.conf:/nats-server.conf
@@ -46,13 +47,29 @@ services:
       - ./jetstream-cluster/n3:/data
       - ./nats-server-host-c.conf:/nats-server.conf
 
+  nats-d:
+    container_name: n4
+    image: nats:2.10.10
+    entrypoint: /nats-server
+    command:
+      - -c=./nats-server.conf
+#      - -D # enable debugging output
+    networks:
+      - nats
+    ports:
+      - 4225:4222
+      - 8225:8222
+    volumes:
+      - ./jetstream-cluster/n4:/data
+      - ./nats-server-host-d.conf:/nats-server.conf
+
   pub:
     build: .
     command: [ "./pubsub", "publish" ]
     networks:
       - nats
     environment:
-      - NATS_URL=nats://nats-a:4222,nats://nats-b:4222,nats://nats-c:4222
+      - NATS_URL=nats://nats-a:4222,nats://nats-b:4223,nats://nats-c:4224
     depends_on:
       - nats-a
       - nats-b
