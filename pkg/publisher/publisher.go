@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"nats-js-poc/pkg/common"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,19 +17,17 @@ type Publisher struct {
 }
 
 func (p Publisher) Start(ctx context.Context) error {
-	hostname, err := os.Hostname()
+	err := p.Connect()
 	if err != nil {
-		return err
-	}
-	err = p.Connect(hostname)
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to connect: %w", err)
 	}
 
 	stream, err := p.Client.GetStream(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get stream: %w", err)
 	}
+
+	p.Client.Logger.Info("starting publishing")
 
 	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
 outerLoop:

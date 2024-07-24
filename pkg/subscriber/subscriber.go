@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"nats-js-poc/pkg/common"
-	"os"
 	"time"
 
 	"github.com/mroth/jitter"
@@ -21,35 +20,27 @@ const consumerName = "consumer-1"
 
 func (s Subscriber) Start(ctx context.Context) error {
 
-	waitForSeconds := 10
-	s.Client.Logger.Info(fmt.Sprintf("wating for %d seconds", waitForSeconds))
-	time.Sleep(time.Duration(waitForSeconds) * time.Second)
+	//waitForSeconds := 10
+	//s.Client.Logger.Info(fmt.Sprintf("wating for %d seconds", waitForSeconds))
+	//time.Sleep(time.Duration(waitForSeconds) * time.Second)
 
-	hostname, err := os.Hostname()
+	err := s.Connect()
 	if err != nil {
-		return err
-	}
-
-	err = s.Connect(hostname)
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to connect: %w", err)
 	}
 
 	stream, err := s.Client.GetStream(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get stream: %w", err)
 	}
-	s.Client.Logger.Info("got stream")
 
 	cons, err := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
 		Name:      consumerName,
 		AckPolicy: jetstream.AckExplicitPolicy,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get consumer: %w", err)
 	}
-
-	s.Client.Logger.Info("got consumer")
 
 	s.Client.Logger.Info("starting consuming")
 

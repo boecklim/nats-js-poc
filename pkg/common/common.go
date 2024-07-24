@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -75,9 +76,15 @@ func NewJetStreamClient(url string, logger *slog.Logger) (*Client, error) {
 	return p, nil
 }
 
-func (cl *Client) Connect(connName string) error {
+func (cl *Client) Connect() error {
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+
 	nc, err := nats.Connect(cl.url,
-		nats.Name(connName),
+		nats.Name(hostname),
 		nats.ErrorHandler(func(c *nats.Conn, s *nats.Subscription, err error) {
 			cl.Logger.Error("connection error", slog.String("err", err.Error()))
 		}),

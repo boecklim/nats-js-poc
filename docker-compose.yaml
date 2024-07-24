@@ -1,37 +1,77 @@
+---
 version: '3'
 services:
-
-  nats:
+  nats-a:
+    container_name: n1
     image: nats:2.10.10
-    container_name: 'nats-server'
-    restart: no
-    expose:
-      - "4222"
-    ports:
-      - "8222:8222"
-      - "4222:4222"
-    hostname: nats-server
+    dns_search: example.net
+    entrypoint: /nats-server
     command:
-      - -n=test-server
       - -c=./nats-server.conf
-      - -D # enable debugging output
-#      - -js # enable JetStream functionality
-#      - -t # validate configuration file
+#      - -D # enable debugging output
+    networks:
+      - nats
+    ports:
+      - 4222:4222
     volumes:
-      - ./nats-server-seed.conf:/nats-server.conf
+      - ./jetstream-cluster/n1:/data
+      - ./nats-server-host-a.conf:/nats-server.conf
+
+  nats-b:
+    container_name: n2
+    image: nats:2.10.10
+    dns_search: example.net
+    entrypoint: /nats-server
+    command:
+      - -c=./nats-server.conf
+#      - -D # enable debugging output
+    networks:
+      - nats
+    ports:
+      - 4223:4222
+    volumes:
+      - ./jetstream-cluster/n2:/data
+      - ./nats-server-host-b.conf:/nats-server.conf
+
+  nats-c:
+    container_name: n3
+    image: nats:2.10.10
+    dns_search: example.net
+    entrypoint: /nats-server
+    command:
+      - -c=./nats-server.conf
+#      - -D # enable debugging output
+    networks:
+      - nats
+    ports:
+      - 4224:4222
+    volumes:
+      - ./jetstream-cluster/n3:/data
+      - ./nats-server-host-c.conf:/nats-server.conf
 
   pub:
     build: .
     command: [ "./pubsub", "publish" ]
-    environment:
-      - NATS_URL=nats://nats:4222
-    depends_on:
+    networks:
       - nats
+    environment:
+      - NATS_URL=nats://nats-a:4222,nats://nats-b:4222,nats://nats-c:4222
+    depends_on:
+      - nats-a
+      - nats-b
+      - nats-c
 
   sub:
     build: .
     command: [ "./pubsub", "subscribe" ]
-    environment:
-      - NATS_URL=nats://nats:4222
-    depends_on:
+    networks:
       - nats
+    environment:
+      - NATS_URL=nats://nats-a:4222,nats://nats-b:4222,nats://nats-c:4222
+    depends_on:
+      - nats-a
+      - nats-b
+      - nats-c
+
+networks:
+  nats: {}
