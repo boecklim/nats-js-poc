@@ -43,6 +43,7 @@ func (s Subscriber) Start(ctx context.Context) error {
 	s.Client.Logger.Info("starting consuming")
 
 	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
+
 outerLoop:
 	for {
 		select {
@@ -63,6 +64,8 @@ outerLoop:
 				} else {
 					s.Client.Logger.Info("message received", slog.String("msg", newMsg.Msg), slog.String("uuid", newMsg.UUID))
 				}
+
+				// ... Do something with the message, then acknowledge
 
 				err = msg.Ack()
 				if err != nil {
