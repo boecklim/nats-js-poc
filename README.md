@@ -6,9 +6,15 @@
 make run
 ```
 
+in order to build the app before running 
+```
+make run-rmi
+```
+
 ## Todos
-- [ ] NATS server configuration
-    - [ ] clustering
-- [ ] NATS connection configuration
-    - [ ] Reconnection
-    - [ ] Ping
+- [X] server configuration
+    - [X] clustering
+- [X] connection configuration
+    - [X] Reconnection
+    - [X] Ping
+
