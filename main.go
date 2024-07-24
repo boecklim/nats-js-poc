@@ -23,11 +23,6 @@ func main() {
 	os.Exit(0)
 }
 
-type Msg struct {
-	Msg string `json:"name"`
-	ID  int    `json:"id"`
-}
-
 func run() error {
 
 	// Use the env variable if running in the container, otherwise use the default.
@@ -63,6 +58,8 @@ func run() error {
 		}
 		p := subscriber.Subscriber{Client: *client}
 
+		logger.Info("Starting subscriber")
+
 		err = p.Start(ctx)
 		if err != nil {
 			return err
@@ -74,7 +71,10 @@ func run() error {
 		if err != nil {
 			return err
 		}
+
 		s := publisher.Publisher{Client: *client}
+
+		logger.Info("Starting publisher")
 
 		err = s.Start(ctx)
 		if err != nil {

@@ -39,7 +39,7 @@ outerLoop:
 				return err
 			}
 
-			_, err = p.Client.JetStream.Publish(ctx, common.Subject, msgBytes)
+			_, err = p.Client.Js.Publish(ctx, common.Subject, msgBytes)
 			if err != nil {
 				return err
 			}

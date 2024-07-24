@@ -9,20 +9,17 @@ import (
 	"time"
 
 	"github.com/mroth/jitter"
-	"github.com/nats-io/nats.go/jetstream"
 )
 
 type Subscriber struct {
 	common.Client
 }
 
-const consumerName = "consumer-1"
-
 func (s Subscriber) Start(ctx context.Context) error {
 
-	//waitForSeconds := 10
-	//s.Client.Logger.Info(fmt.Sprintf("wating for %d seconds", waitForSeconds))
-	//time.Sleep(time.Duration(waitForSeconds) * time.Second)
+	waitForSeconds := 5
+	s.Client.Logger.Info(fmt.Sprintf("wating for %d seconds", waitForSeconds))
+	time.Sleep(time.Duration(waitForSeconds) * time.Second)
 
 	err := s.Connect()
 	if err != nil {
@@ -34,10 +31,11 @@ func (s Subscriber) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to get stream: %w", err)
 	}
 
-	cons, err := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
-		Name:      consumerName,
-		AckPolicy: jetstream.AckExplicitPolicy,
-	})
+	cons, err := s.Client.GetConsumer(ctx, stream)
+	if err != nil {
+		return fmt.Errorf("failed to get consumer: %w", err)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to get consumer: %w", err)
 	}
