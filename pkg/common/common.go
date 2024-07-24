@@ -25,8 +25,10 @@ type Client struct {
 	Logger       *slog.Logger
 }
 
-func NewJetStreamClient(url string, logger *slog.Logger) (*Client, error) {
-	nc, err := nats.Connect(url)
+func NewJetStreamClient(url string, logger *slog.Logger, connectionName string) (*Client, error) {
+	nc, err := nats.Connect(url,
+		nats.Name(connectionName),
+	)
 	if err != nil {
 		return nil, err
 	}

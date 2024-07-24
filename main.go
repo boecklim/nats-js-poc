@@ -34,15 +34,17 @@ func run() error {
 		url = nats.DefaultURL
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	client, err := common.NewJetStreamClient(url, logger)
-	if err != nil {
-		return err
-	}
+
+	var client common.Client
 
 	arg := os.Args[1]
 	switch arg {
 	case "subscribe":
 
+		client, err := common.NewJetStreamClient(url, logger, "subscriber connection")
+		if err != nil {
+			return err
+		}
 		p := subscriber.Subscriber{Client: *client}
 
 		err = p.Start()
@@ -52,6 +54,10 @@ func run() error {
 		logger.Info("Finished subscribing")
 	case "publish":
 
+		client, err := common.NewJetStreamClient(url, logger, "publisher connection")
+		if err != nil {
+			return err
+		}
 		s := publisher.Publisher{Client: *client}
 
 		err = s.Start()
