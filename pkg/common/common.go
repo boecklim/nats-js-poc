@@ -14,8 +14,8 @@ const StreamName = "stream-1"
 const Subject = "submit-tx"
 
 type Msg struct {
-	Msg string `json:"name"`
-	ID  int    `json:"id"`
+	Msg  string `json:"name"`
+	UUID string `json:"uuid"`
 }
 
 type Client struct {

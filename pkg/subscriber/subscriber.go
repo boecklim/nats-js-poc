@@ -63,7 +63,7 @@ outerLoop:
 					fmt.Printf("failed to unmarshal message: %v", err)
 					s.Client.Logger.Error("failed to unmarshal message", slog.String("err", err.Error()))
 				} else {
-					s.Client.Logger.Info("new msg", slog.String("msg", string(msg.Data())))
+					s.Client.Logger.Info("message received", slog.String("msg", newMsg.Msg), slog.String("uuid", newMsg.UUID))
 				}
 
 				msg.Ack()

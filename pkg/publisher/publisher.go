@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mroth/jitter"
 )
 
@@ -30,12 +31,11 @@ func (p Publisher) Start() error {
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT)
 
 	msgTicker := jitter.NewTicker(3*time.Second, 0.5)
-	counter := 0
 outerLoop:
 	for {
 		select {
 		case <-msgTicker.C:
-			msgBytes, err := json.Marshal(common.Msg{Msg: time.Now().Format(time.RFC3339), ID: counter})
+			msgBytes, err := json.Marshal(common.Msg{Msg: time.Now().Format(time.RFC3339), UUID: uuid.New().String()})
 			if err != nil {
 				return err
 			}
@@ -44,8 +44,6 @@ outerLoop:
 			if err != nil {
 				return err
 			}
-			p.Client.Logger.Info("published message")
-			counter++
 
 			info, err := stream.Info(ctx)
 			if err != nil {
@@ -53,7 +51,7 @@ outerLoop:
 				continue
 			}
 
-			p.Client.Logger.Info("info",
+			p.Client.Logger.Info("message published",
 				slog.Int("cons", info.State.Consumers),
 				slog.Int("subjects", int(info.State.NumSubjects)),
 				slog.Int("msgs", int(info.State.Msgs)),
