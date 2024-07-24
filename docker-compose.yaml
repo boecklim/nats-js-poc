@@ -1,10 +1,10 @@
 version: '3'
 services:
- 
+
   nats:
     image: nats:2.10.10
     container_name: 'nats-server'
-    restart: on-failure
+    restart: no
     expose:
       - "4222"
     ports:
@@ -12,9 +12,14 @@ services:
       - "4222:4222"
     hostname: nats-server
     command:
-      - -js # enable JetStream functionality
+      - -n=test-server
+      - -c=./nats-server.conf
       - -D # enable debugging output
-  
+#      - -js # enable JetStream functionality
+#      - -t # validate configuration file
+    volumes:
+      - ./nats-server-seed.conf:/nats-server.conf
+
   pub:
     build: .
     command: [ "./pubsub", "publish" ]
