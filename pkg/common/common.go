@@ -26,10 +26,9 @@ type Client struct {
 	nc           *nats.Conn
 	Logger       *slog.Logger
 	url          string
-	connName     string
 }
 
-func NewJetStreamClient(url string, logger *slog.Logger, connectionName string) (*Client, error) {
+func NewJetStreamClient(url string, logger *slog.Logger) (*Client, error) {
 
 	cfg := jetstream.StreamConfig{
 		Name:        StreamName,
@@ -71,15 +70,14 @@ func NewJetStreamClient(url string, logger *slog.Logger, connectionName string) 
 		JetStreamCfg: cfg,
 		Logger:       logger,
 		url:          url,
-		connName:     connectionName,
 	}
 
 	return p, nil
 }
 
-func (cl *Client) Connect() error {
+func (cl *Client) Connect(connName string) error {
 	nc, err := nats.Connect(cl.url,
-		nats.Name(cl.connName),
+		nats.Name(connName),
 		nats.ErrorHandler(func(c *nats.Conn, s *nats.Subscription, err error) {
 			cl.Logger.Error("connection error", slog.String("err", err.Error()))
 		}),

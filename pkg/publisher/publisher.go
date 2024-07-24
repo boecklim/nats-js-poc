@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"nats-js-poc/pkg/common"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,8 +18,11 @@ type Publisher struct {
 }
 
 func (p Publisher) Start(ctx context.Context) error {
-
-	err := p.Connect()
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+	err = p.Connect(hostname)
 	if err != nil {
 		return err
 	}

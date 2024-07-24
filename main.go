@@ -57,7 +57,7 @@ func run() error {
 	switch arg {
 	case "subscribe":
 
-		client, err = common.NewJetStreamClient(url, logger, "subscriber connection")
+		client, err = common.NewJetStreamClient(url, logger)
 		if err != nil {
 			return err
 		}
@@ -70,7 +70,7 @@ func run() error {
 		logger.Info("Finished subscribing")
 	case "publish":
 
-		client, err = common.NewJetStreamClient(url, logger, "publisher connection")
+		client, err = common.NewJetStreamClient(url, logger)
 		if err != nil {
 			return err
 		}

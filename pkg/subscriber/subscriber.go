@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"nats-js-poc/pkg/common"
+	"os"
 	"time"
 
 	"github.com/mroth/jitter"
@@ -24,7 +25,12 @@ func (s Subscriber) Start(ctx context.Context) error {
 	s.Client.Logger.Info(fmt.Sprintf("wating for %d seconds", waitForSeconds))
 	time.Sleep(time.Duration(waitForSeconds) * time.Second)
 
-	err := s.Connect()
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+
+	err = s.Connect(hostname)
 	if err != nil {
 		return err
 	}
