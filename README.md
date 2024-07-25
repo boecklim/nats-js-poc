@@ -27,7 +27,7 @@ nats bench foo --pub 5 --sub 5 --size 200 --js --pull --msgs=50000 --storage=mem
 
 - [X] Server configuration
   - [X] Clustering
-  - [ ] Accounts
+  - [X] Accounts
 - [X] Connection configuration
   - [X] Reconnection
   - [X] Ping

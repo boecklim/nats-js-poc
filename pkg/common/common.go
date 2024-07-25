@@ -64,6 +64,7 @@ func (cl *Client) Connect() error {
 
 	nc, err := nats.Connect(cl.url,
 		nats.Name(hostname),
+		nats.UserInfo("test-user", "test-password"),
 		nats.ErrorHandler(func(c *nats.Conn, s *nats.Subscription, err error) {
 			cl.Logger.Error("connection error", slog.String("err", err.Error()))
 		}),
@@ -110,7 +111,7 @@ func (cl *Client) Close() error {
 }
 
 func (cl *Client) GetStream(ctx context.Context) (jetstream.Stream, error) {
-	streamCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	streamCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
 	stream, err := cl.Js.Stream(streamCtx, streamName)
